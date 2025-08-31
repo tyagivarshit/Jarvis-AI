@@ -14,6 +14,7 @@ import pywhatkit
 import smtplib
 import sys
 import pyjokes
+from newsapi import NewsApiClient
 
 def init_engine():
     engine = pyttsx3.init('sapi5')
@@ -65,6 +66,31 @@ def sendEmail(to, content):
     server.close()
 
 
+def news():
+
+    api_key = os.getenv("NEWS_API_KEY", "d53ffef0c59c4985a01940c1b12cb52e")
+    newsapi = NewsApiClient(api_key=api_key)
+
+    try:
+        top_headlines = newsapi.get_top_headlines(country='us', language='en')
+
+        articles = top_headlines['articles']
+        if not articles:
+            speak("Sorry, I could not retrieve any news headlines at the moment.")
+            return
+
+        speak("Here are the top headlines:")
+
+        for i, article in enumerate(articles[:5], 1):
+            title = article['title']
+            source = article['source']['name']
+            headline = f"{i}. {title} (from {source})"
+            print(headline)
+            speak(headline)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        speak("Sorry, I am unable to fetch the news right now.")
 
 if __name__ == "__main__":
     wish()
@@ -169,36 +195,22 @@ if __name__ == "__main__":
         elif("no thanks" in query):
             speak("Thank you for using Jarvis AI , have a nice day")
             sys.exit()
-        elif("jarvis shut down the system" in query):
-            os.system("shutdown /s /t /c")
-        elif("jarvis restart the system" in query):
-            os.system("shutdown /r /t /c")
-        elif("jarvis sleep the system" in query):
-            os.system("rundl132.exe powrprof.dl1,SetSuspendState 0,1,0")
+        if ("jarvis shut down the system" in query):
+            os.system("shutdown /s /t 0")
+        elif ("jarvis restart the system" in query):
+            os.system("shutdown /r /t 0")
+        elif ("jarvis sleep the system" in query):
+            os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
         elif("jarvis tell me a joke" in query):
             joke = pyjokes.get_joke()
             speak(joke)
-        elif "jarvis set alarm" in query:
-            speak("Sir, please tell me the time for the alarm in HH:MM format")
-            alarm_time = takeCommand().lower()  # example: "07:30" ya "22:00"
 
-            try:
-                hour, minute = map(int, alarm_time.split(":"))
-                speak(f"Alarm set in {hour}:{minute:02d}")
-
-                while True:
-                    now = datetime.datetime.now()
-                    if now.hour == hour and now.minute == minute:
-                        speak("Sir, alarm ringing now!")
-                        music_file = r"C:\Users\Knife Brows.mp3"
-                        os.startfile(music_file)
-                        break
-                    time.sleep(10)
-            except:
-                speak("Sorry sir, I could not understand the time format. Please say again.")
         elif "switch the window" in query:
             pyautogui.keyDown("alt")
             pyautogui.press("tab")
             time.sleep(1)
             pyautogui.keyUp("alt")
+        elif("jarvis give me the news" in query):
+            speak("please wait , fetching the news")
+            news()
         speak("sir do you have any other work?")
